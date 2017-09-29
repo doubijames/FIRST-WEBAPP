@@ -34,7 +34,7 @@ async def select(sql, args, size=None):
         logging.info('rows returned %s' % len(rs))
         return rs
 
-async def execute(sql, args):
+async def execute(sql, args,autocommit=True):
     log(sql)
     async with __pool.get() as conn:
         if not autocommit:
@@ -65,10 +65,13 @@ class Field(object):
 class StringField(Field):
     def __init__(self,name=None,primary_key=False,default=None,ddl='varchar(100)'):
         super.__init__(name,ddl,primary_key,default)
+class IntegerField(Field):
+    def __init__(self,name=None,primary_key=False,default =0 ):
+        super.__init__(name,'bigint',primary_key,default)
 
 class ModelMetaclass(type):
     def __new__(cls,name,bases,attrs):
-        if name = 'Model':
+        if name == 'Model':
             return type.__new__(cls,name,bases,attrs)
         tableName = attrs.get('__table__',None) or name
         logging.info('found model: %s(table:%s)' %(name,tableName))
@@ -121,3 +124,19 @@ class Model(dict,metaclass=ModelMetaclass):
                 logging.debug('using default value for %s:%s' %(key,str(value)))
                 setattr(self,key,value)
             return value
+
+    @classmethod
+    async def find(cls,pk):
+        'find object by prmary key'
+        rs = await select('%s where `%s`=?' % (cls.__select__,cls.__primary__key__),[pk],1)
+        if len(rs) == 0:
+            return None
+        return cls(**rs[0])
+
+    async def save(self):
+        args = list(map(self.getValueOrDefault(),self.__fields__))
+        args.append(self.getValueOrDefault(self.__primary_key__))
+        rows = await execute(self.__insert__,args)
+        if rows != 1:
+            logging.warn('failed to insert record:affected rows: %s' % rows)
+
