@@ -56,7 +56,7 @@ async def response_factory(app,handler):
                 resp.content_type = 'application/json;charset=utf-8'
                 return resp
             else:
-                resp = web.Response(body=app[__template__].get_template(template).render(**r).encode('utf-8'))
+                resp = web.Response(body=app['__templating__'].get_template(template).render(**r).encode('utf-8'))
                 resp.content_type = 'text/html;charset=utf-8'
                 return resp
         if isinstance(r,int) and r >=100 and r < 600:
@@ -89,8 +89,8 @@ async def init(loop):
     init_jinja2(app,filters = dict(datetime = datetime_filter))
     add_routes(app,'handlers')
     add_static(app)
-    srv = await loop.create_server(app.make_handler(), '127.0.0.1', 9000)
-    logging.info('server started at http://127.0.0.1:9000')
+    srv = await loop.create_server(app.make_handler(), '127.0.0.1', 8999)
+    logging.info('server started at http://127.0.0.1:8999')
     return srv
 
 loop = asyncio.get_event_loop()
