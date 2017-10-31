@@ -5,6 +5,7 @@ from aiohttp import web
 from jinja2 import Environment,FileSystemLoader
 import orm
 from coroweb import add_routes, add_static
+from config import configs
 
 def init_jinja2(app,**kw):
     logging.info('init jinja2...')
@@ -14,6 +15,7 @@ def init_jinja2(app,**kw):
         block_end_string = kw.get('block_end_string','%}'),
         variable_start_string = kw.get('variable_start_string','{{'),
         variable_end_string = kw.get('variable_end_string','}}'),
+        # 当模板文件被修改后，下次请求加载该模板文件的时候会自动重新加载修改后的模板文件
         auto_reload = kw.get('auto_reload',True)
     )
     path = kw.get('path',None)
@@ -21,7 +23,7 @@ def init_jinja2(app,**kw):
         path = os.path.join(os.path.dirname(os.path.abspath(__file__)),'templates')
     logging.info('set jinja2 template path: %s' %path)
     env = Environment(loader=FileSystemLoader(path),**options)
-    filters = kw.get('fifters',None)
+    filters = kw.get('filters',None)
     if filters is not None:
         for name,f in filters.items():
             env.filters[name] = f
@@ -82,15 +84,15 @@ def datetime_filter(t):
     return u'%s年%s月%s日' % (dt.year, dt.month, dt.day)
 
 async def init(loop):
-    await orm.create_pool(loop=loop,host='127.0.0.1',port=3306,user='root',password='a65900842',db='awesome')
+    await orm.create_pool(loop=loop,**configs)
     app = web.Application(loop=loop,middlewares=[
         logger_factory,response_factory
     ])
-    init_jinja2(app,filters = dict(datetime = datetime_filter))
+    init_jinja2(app,filters=dict(datetime=datetime_filter))
     add_routes(app,'handlers')
     add_static(app)
-    srv = await loop.create_server(app.make_handler(), '127.0.0.1', 8999)
-    logging.info('server started at http://127.0.0.1:8999')
+    srv = await loop.create_server(app.make_handler(), '127.0.0.1', 9000)
+    logging.info('server started at http://127.0.0.1:9000')
     return srv
 
 loop = asyncio.get_event_loop()

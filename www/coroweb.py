@@ -29,7 +29,6 @@ def post(path):
         return wrapper
     return decorator
 
-
 def get_required_kw_args(fn):
     args = []
     params = inspect.signature(fn).parameters
@@ -108,7 +107,7 @@ class RequestHandler(object):
             kw = dict(**request.match_info)
         else:
             if not self._has_var_kw_arg and self._named_kw_args:
-                # remove all unamed kw:
+                # remove all unamed kw: 从request_content中删除URL处理函数中所有不需要的参数
                 copy = dict()
                 for name in self._named_kw_args:
                     if name in kw:
