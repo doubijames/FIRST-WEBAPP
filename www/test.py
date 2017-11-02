@@ -1,2 +1,3 @@
-s=dict(datetime=1)
-print(s)
+import time
+h=[1,2,3,4]
+print(h[1])

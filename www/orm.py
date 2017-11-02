@@ -3,7 +3,7 @@
 
 __author__ = 'Michael Liao'
 
-import asyncio, logging
+import asyncio, logging,time,uuid
 
 import aiomysql
 
@@ -227,3 +227,31 @@ class Model(dict, metaclass=ModelMetaclass):
         rows = await execute(self.__delete__, args)
         if rows != 1:
             logging.warn('failed to remove by primary key: affected rows: %s' % rows)
+
+if __name__=='__main__':
+    def next_id():
+        return '%015d%s000' % (int(time.time() * 1000), uuid.uuid4().hex)
+
+    class User(Model):
+        __table__ = 'users'
+
+        id = StringField(primary_key=True, default=next_id, ddl='varchar(50)')
+        email = StringField(ddl='varchar(50)')
+        passwd = StringField(ddl='varchar(50)')
+        admin = BooleanField()
+        name = StringField(ddl='varchar(50)')
+        image = StringField(ddl='varchar(500)')
+        created_at = FloatField(default=time.time)
+
+    # 创建实例
+
+    async def test(loop):
+        await create_pool(loop=loop, host='localhost', port=3306, user='root', password='a65900842', database='awesome')
+        s = await User.findAll(where='email=?,?',args='[410583828@qq.com,410583828.com]')
+        print(s)
+
+
+
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(test(loop))
+    loop.run_forever()

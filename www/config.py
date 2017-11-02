@@ -29,7 +29,9 @@ def merge(defaults,override):
             if isinstance(v,dict):
                 r[k] = merge(v,override[k])
             else:
-                r[k] = v
+                r[k] = override[k]
+        else:
+            r[k] = v
     return r
 
 def toDict(d):
